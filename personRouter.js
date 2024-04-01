@@ -1,11 +1,11 @@
 const express = require("express");
 
-const db = require("./db.json");
+const phonebook = require("./phonebook.json");
 
 const router = express.Router();
 
 router.get("/", (req, res) => {
-  res.json(db);
+  res.json(phonebook);
 });
 
 module.exports = router;
