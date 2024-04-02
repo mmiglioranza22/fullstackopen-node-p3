@@ -3,7 +3,8 @@ const cors = require("cors");
 const router = require("./router/router");
 const morgan = require("morgan");
 const app = express();
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
+
 morgan.token("body", (req) => {
   return JSON.stringify(req.body);
 });
@@ -11,6 +12,7 @@ morgan.token("body", (req) => {
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(express.static("dist"));
 
 app.use(
   morgan(":method :url :status :response-time ms - :res[content-length] :body")
