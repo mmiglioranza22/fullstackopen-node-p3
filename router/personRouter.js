@@ -1,34 +1,38 @@
 const express = require("express");
-
-const phonebook = require("../phonebook.json");
+const Person = require("../models/index");
 
 const router = express.Router();
 
 router.get("/", (req, res) => {
-  res.json(phonebook);
+  Person.find({}).then((persons) => {
+    res.json(persons);
+  });
 });
 
 router.get("/:id", (req, res) => {
-  const person = phonebook.find(
-    (person) => person.id === Number(req.params.id)
-  );
-  if (person) {
-    res.json(person);
-  } else {
-    res.status(404).end();
-  }
+  Person.findById(req.params.id)
+    .then((person) => {
+      if (person) {
+        res.json(person);
+      } else {
+        res.status(404).end();
+      }
+    })
+    .catch((err) => {
+      console.error(err);
+      res.status(404).end();
+    });
 });
 
 router.delete("/:id", (req, res) => {
-  const index = phonebook.findIndex(
-    (person) => person.id === Number(req.params.id)
-  );
-  if (index !== -1) {
-    phonebook.splice(index, 1);
-    res.status(204).end();
-  } else {
-    res.status(404).end();
-  }
+  Person.deleteOne({ _id: req.params.id })
+    .then((result) => {
+      res.status(204).json(result);
+    })
+    .catch((err) => {
+      console.error(err);
+      res.status(404).end();
+    });
 });
 
 router.post("/", (req, res) => {
@@ -39,12 +43,27 @@ router.post("/", (req, res) => {
   if (!person.number) {
     return res.status(400).json({ error: "number is missing" });
   }
-  if (phonebook.find((p) => p.name === person.name)) {
-    return res.status(400).json({ error: "name must be unique" });
-  }
-  phonebook.push({ ...person, id: Math.floor(Math.random() * 1000000) });
+  Person.find({ name: person.name })
+    .then((result) => {
+      if (result.length > 0) {
+        return res.status(400).json({ error: "name must be unique" });
+      } else {
+        return res.status(404).end();
+      }
+    })
+    .catch((err) => {
+      console.error(err);
+      return res.status(404).end();
+    });
 
-  res.status(201).json(person);
+  Person.create(person)
+    .then((person) => {
+      return res.status(201).json(person);
+    })
+    .catch((err) => {
+      console.error(err);
+      return res.status(404).end();
+    });
 });
 
 module.exports = router;
