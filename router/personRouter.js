@@ -1,16 +1,21 @@
 const express = require("express");
-const Person = require("../models/index");
+
+const PersonService = require("../services/person");
 
 const router = express.Router();
 
-router.get("/", (req, res) => {
-  Person.find({}).then((persons) => {
-    res.json(persons);
-  });
+router.get("/", (req, res, next) => {
+  PersonService.getAll()
+    .then((persons) => {
+      res.json(persons);
+    })
+    .catch((err) => {
+      next(err);
+    });
 });
 
-router.get("/:id", (req, res) => {
-  Person.findById(req.params.id)
+router.get("/:id", (req, res, next) => {
+  PersonService.getById(req.params.id)
     .then((person) => {
       if (person) {
         res.json(person);
@@ -19,23 +24,32 @@ router.get("/:id", (req, res) => {
       }
     })
     .catch((err) => {
-      console.error(err);
-      res.status(404).end();
+      next(err);
     });
 });
 
-router.delete("/:id", (req, res) => {
-  Person.deleteOne({ _id: req.params.id })
+router.delete("/:id", (req, res, next) => {
+  PersonService.delete(req.params.id)
     .then((result) => {
       res.status(204).json(result);
     })
     .catch((err) => {
-      console.error(err);
-      res.status(404).end();
+      next(err);
     });
 });
 
-router.post("/", (req, res) => {
+router.put("/:id", (req, res, next) => {
+  const person = req.body;
+  PersonService.update(req.params.id, person)
+    .then((result) => {
+      res.status(201).json(result);
+    })
+    .catch((err) => {
+      next(err);
+    });
+});
+
+router.post("/", (req, res, next) => {
   const person = req.body;
   if (!person.name) {
     return res.status(400).json({ error: "name  is missing" });
@@ -43,26 +57,13 @@ router.post("/", (req, res) => {
   if (!person.number) {
     return res.status(400).json({ error: "number is missing" });
   }
-  Person.find({ name: person.name })
-    .then((result) => {
-      if (result.length > 0) {
-        return res.status(400).json({ error: "name must be unique" });
-      } else {
-        return res.status(404).end();
-      }
-    })
-    .catch((err) => {
-      console.error(err);
-      return res.status(404).end();
-    });
 
-  Person.create(person)
+  PersonService.create(person)
     .then((person) => {
       return res.status(201).json(person);
     })
     .catch((err) => {
-      console.error(err);
-      return res.status(404).end();
+      next(err);
     });
 });
 
